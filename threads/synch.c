@@ -68,7 +68,17 @@ sema_down (struct semaphore *sema)
     old_level = intr_disable ();
     while (sema->value == 0)
         {
-            list_push_back (&sema->waiters, &thread_current ()->elem);
+           // 이게 원본 list_push_back (&sema->waiters, &thread_current ()->elem);
+
+
+
+           //------------------------------------------------------------------------
+            /* ----- 👇 수정된 부분 ----- */
+           list_insert_ordered(&sema->waiters, &thread_current ()->elem, thread_priority_compare, NULL);
+           //--------------------------------------------------------------------------
+
+
+           
             thread_block ();
         }
     sema->value--;
@@ -295,8 +305,23 @@ cond_wait (struct condition *cond, struct lock *lock)
     ASSERT (lock_held_by_current_thread (lock));
 
     sema_init (&waiter.semaphore, 0);
-    list_push_back (&cond->waiters, &waiter.elem);
+    // 이게 원본 list_push_back (&cond->waiters, &waiter.elem);
     lock_release (lock);
+
+
+   //------------------------------------------------------------------
+   /* ----- 수정된 부분 ----- */
+   /*
+   * (기존 코드) list_push_back (&cond->waiters, &waiter.elem);
+   * * (수정 코드) 우선순위 비교 함수를 사용해 정렬된 위치에 삽입합니다.
+   */
+    list_insert_ordered(&cond->waiters, &waiter.elem, 
+                      thread_priority_compare, NULL);
+     /* ----- 수정 끝 ----- */
+   //----------------------------------------------------------------------
+
+
+   
     sema_down (&waiter.semaphore);
     lock_acquire (lock);
 }
