@@ -721,7 +721,8 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority)
 {
-    thread_current ()->priority = new_priority;
+    // 이게 원본
+   //thread_current ()->priority = new_priority;
 
 
 
@@ -732,6 +733,18 @@ thread_set_priority (int new_priority)
    */
    if (!thread_mlfqs)
    {
+
+
+
+      //----------------------------------------------
+      // 2차 수정
+      thread_current ()->original_priority = new_priority;
+
+      thread_recalculate_priority(thread_current());
+      //---------------------------------------------
+
+
+      
       thread_check_preemption();
    }
    //-----------------------------------------------------
@@ -777,6 +790,55 @@ thread_get_recent_cpu (void)
     /* Not yet implemented. */
     return 0;
 }
+
+
+
+//-------------------------------------------------------------
+// 2차 수정
+/*
+ * 스레드 t의 유효 우선순위(t->priority)를 재계산합니다.
+ * t->original_priority와 t가 보유한 모든 락을 기다리는
+ * 스레드들의 우선순위 중 가장 높은 값으로 설정합니다.
+ */
+void
+thread_recalculate_priority(struct thread *t)
+{
+  /* 1. 기본 우선순위는 original_priority */
+  int max_priority = t->original_priority;
+
+  /* 2. 보유한 락 리스트를 순회 */
+  if (!list_empty(&t->locks_i_hold))
+  {
+    struct list_elem *e;
+    for (e = list_begin(&t->locks_i_hold); e != list_end(&t->locks_i_hold); e = list_next(e))
+    {
+      struct lock *l = list_entry(e, struct lock, elem);
+
+      /* 3. 각 락의 대기열(waiters)을 확인 */
+      if (!list_empty(&l->semaphore.waiters))
+      {
+        /*
+         * sema_down에서 이미 우선순위로 정렬했으므로
+         * 맨 앞의 스레드가 가장 높은 우선순위를 가집니다.
+         */
+        struct thread *waiter = list_entry(list_front(&l->semaphore.waiters), 
+                                           struct thread, elem);
+        
+        /* 4. 더 높은 우선순위가 있다면 갱신 */
+        if (waiter->priority > max_priority)
+        {
+          max_priority = waiter->priority;
+        }
+      }
+    }
+  }
+
+  /* 5. 최종 유효 우선순위 설정 */
+  t->priority = max_priority;
+}
+//-------------------------------------------------------------
+
+
 
 /* Idle thread.  Executes when no other thread is ready to run.
 
@@ -873,6 +935,18 @@ init_thread (struct thread *t, const char *name, int priority)
     strlcpy (t->name, name, sizeof t->name);
     t->stack = (uint8_t *)t + PGSIZE;
     t->priority = priority;
+
+
+   //---------------------------------------------------------------------------------
+   /* ----- 추가된 초기화 ----- */
+    t->original_priority = priority;       /* 원래 우선순위 설정 */
+    list_init(&t->locks_i_hold);           /* 보유 락 리스트 초기화 */
+    t->lock_im_waiting_for = NULL;         /* 대기 락 없음으로 초기화 */
+    /* ----- 추가 끝 ----- */
+   //----------------------------------------------------------------------------------
+
+
+   
     t->magic = THREAD_MAGIC;
     list_push_back (&all_list, &t->allelem);
 }
