@@ -90,6 +90,8 @@ sema_down (struct semaphore *sema)
    decremented, false otherwise.
 
    This function may be called from an interrupt handler. */
+
+
 bool
 sema_try_down (struct semaphore *sema)
 {
@@ -166,6 +168,29 @@ sema_test_helper (void *sema_)
             sema_up (&sema[1]);
         }
 }
+
+
+
+//---------------------------------------------------------------------------
+/* <--- 2. 이 함수 전체를 추가하세요 */
+/*
+ * cond_wait의 waiters 리스트(semaphore_elem)를 
+ * 우선순위 순으로 정렬하기 위한 비교 함수
+ */
+static bool
+sema_elem_priority_compare (const struct list_elem *a,
+                            const struct list_elem *b,
+                            void *aux UNUSED)
+{
+  const struct semaphore_elem *sa = list_entry(a, struct semaphore_elem, elem);
+  const struct semaphore_elem *sb = list_entry(b, struct semaphore_elem, elem);
+  
+  /* 내림차순 정렬 (높은 우선순위가 먼저) */
+  return sa->priority > sb->priority;
+}
+//---------------------------------------------------------------------------
+
+
 
 /* Initializes LOCK.  A lock can be held by at most a single
    thread at any given time.  Our locks are not "recursive", that
@@ -261,6 +286,16 @@ struct semaphore_elem
 {
     struct list_elem elem;      /* List element. */
     struct semaphore semaphore; /* This semaphore. */
+
+
+
+//----------------------------------------------------------------------
+// 2차 수
+    int priority;               /* <--- 1. 이 줄을 추가하세요 */
+//-----------------------------------------------------------------------
+
+
+
 };
 
 /* Initializes condition variable COND.  A condition variable
@@ -306,6 +341,20 @@ cond_wait (struct condition *cond, struct lock *lock)
 
     sema_init (&waiter.semaphore, 0);
     // 이게 원본 list_push_back (&cond->waiters, &waiter.elem);
+
+
+
+   //----------------------------------------------------------------------
+   /* 3-A: waiter에 현재 스레드의 우선순위를 저장합니다. */
+    waiter.priority = thread_current ()->priority; 
+  
+    /* 3-B: 새로 만든 올바른 비교 함수(sema_elem_priority_compare)를 사용합니다. */
+    list_insert_ordered(&cond->waiters, &waiter.elem, 
+                      sema_elem_priority_compare, NULL);
+   //-----------------------------------------------------------------------
+
+
+   
     lock_release (lock);
 
 
@@ -315,9 +364,14 @@ cond_wait (struct condition *cond, struct lock *lock)
    * (기존 코드) list_push_back (&cond->waiters, &waiter.elem);
    * * (수정 코드) 우선순위 비교 함수를 사용해 정렬된 위치에 삽입합니다.
    */
+   /*
     list_insert_ordered(&cond->waiters, &waiter.elem, 
                       thread_priority_compare, NULL);
-     /* ----- 수정 끝 ----- */
+                      */ 
+   
+   //2차 수정 위해 주석 처리
+   
+   /* ----- 수정 끝 ----- */
    //----------------------------------------------------------------------
 
 
