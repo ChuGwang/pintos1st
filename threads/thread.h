@@ -119,8 +119,20 @@ struct thread
     int mlfqs_age;            // 현재 큐에서 대기한 시간 (승급용)
     int ticks_in_current_slice; // 현재 타임 슬라이스에서 실행된 틱 수
 //-------------------------------------------------------------------------------
+// 2차 수정
+/* ----- 우선순위 기부를 위해 추가 ----- */
 
+    /* 기부 받기 전의 원래 우선순위 */
+    int original_priority;
 
+    /* 이 스레드가 현재 보유하고 있는 락들의 리스트 */
+    struct list locks_i_hold;
+
+    /* 이 스레드가 현재 대기 중인 락 (이 락의 홀더에게 기부함) */
+    struct lock *lock_im_waiting_for;
+
+    /* ----- 추가 끝 ----- */
+    //--------------------------------------------------------------
 
 
 
@@ -194,5 +206,14 @@ int thread_get_nice (void);
 void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
+
+
+
+//----------------------------------------------------------------
+// 여기 아래 2차 추가
+void thread_recalculate_priority(struct thread *t);
+//---------------------------------------------------------------
+
+
 
 #endif /* threads/thread.h */
