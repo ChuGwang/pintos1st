@@ -920,7 +920,15 @@ init_thread (struct thread *t, const char *name, int priority)
     ASSERT (name != NULL);
 
 
-    //-----------------------------------------------------------------
+   
+    memset (t, 0, sizeof *t);
+   
+    t->status = THREAD_BLOCKED;
+    strlcpy (t->name, name, sizeof t->name);
+    t->stack = (uint8_t *)t + PGSIZE;
+    t->priority = priority;
+
+   //-----------------------------------------------------------------
     /* ----- 스케줄링 변수 초기화 추가 ----- */
     t->age = 0;
     t->mlfqs_queue_level = 0;     /* 모든 스레드는 Q0에서 시작 */
@@ -928,13 +936,6 @@ init_thread (struct thread *t, const char *name, int priority)
     t->ticks_in_current_slice = 0;
     /* -----  추가 끝 ----- */
    //-------------------------------------------------------------------
-
-   
-    memset (t, 0, sizeof *t);
-    t->status = THREAD_BLOCKED;
-    strlcpy (t->name, name, sizeof t->name);
-    t->stack = (uint8_t *)t + PGSIZE;
-    t->priority = priority;
 
 
    //---------------------------------------------------------------------------------
