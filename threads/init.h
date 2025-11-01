@@ -9,4 +9,12 @@
 /* Page directory with kernel mappings only. */
 extern uint32_t *init_page_dir;
 
+
+//----------------------------------------------------------
+// 여기 아래 추가
+/* init.h */
+extern bool mlfqs;
+//----------------------------------------------------------
+
+
 #endif /* threads/init.h */
