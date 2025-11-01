@@ -104,8 +104,6 @@ struct thread
     /* For timer_sleep() */
     int64_t wakeup_tick;
 
-    /* Owned by thread.c. */
-    unsigned magic; /* Detects stack overflow. */
 
 
 
@@ -113,17 +111,47 @@ struct thread
 //--------------------------------------------------------------------
 //여기부터
 
-    int base_priority;       /* 원래 우선순위(우선순위 상속/복원용) */
+    //int base_priority;       /* 원래 우선순위(우선순위 상속/복원용) */
     int age;                 /* 에이징 카운터 (큐에 들어갈 때 0으로 초기화) */
 
     /* MLFQS 관련 */
-    bool mlfqs_enabled;      /* 전역 플래그 대신 스레드가 MLFQS 모드인지 표시(선택적) */
-    int mlfq_level;          /* 0(Q0),1(Q1),2(Q2) */
-    int mlfq_time_used;      /* 현재 레벨에서 소모한 틱 수 */
-
+    int mlfqs_queue_level;    // 현재 속한 큐 레벨 (0, 1, 2)
+    int mlfqs_age;            // 현재 큐에서 대기한 시간 (승급용)
+    int ticks_in_current_slice; // 현재 타임 슬라이스에서 실행된 틱 수
 //-------------------------------------------------------------------------------
 
+
+
+
+
+
+    /* Owned by thread.c. */
+    unsigned magic; /* Detects stack overflow. */
+
 };
+
+
+
+
+//-----------------------------------------------------------------------
+// 여기부터
+
+// 리스트를 우선순위 순으로 정렬하기 위한 비교 함수
+bool thread_priority_compare(const struct list_elem *a,
+                             const struct list_elem *b,
+                             void *aux);
+
+// 현재 스레드가 선점되어야 하는지 확인하고 필요시 yield
+void thread_check_preemption(void);
+
+//--------------------------------------------------------------------------
+
+
+
+
+
+
+
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
@@ -160,12 +188,6 @@ void thread_foreach (thread_action_func *, void *);
 int thread_get_priority (void);
 void thread_set_priority (int);
 
-
-//--------------------------------------------------
-//여기 아래 추가
-/* 새로 추가하는 함수 */
-void thread_check_preempt_after_unblock (void);
-//--------------------------------------------------
 
 
 int thread_get_nice (void);
