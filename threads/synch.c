@@ -269,6 +269,7 @@ lock_acquire (struct lock *lock)
 
    //---------------------------------------------------------
    // 2차 수정
+   struct thread *current = thread_current();
    /* ----- 기부 로직 추가 (sema_down 전) ----- */
    if (lock->holder != NULL)
    {
