@@ -119,8 +119,18 @@ sema_down (struct semaphore *sema)
 
            //------------------------------------------------------------------------
             /* ----- 수정된 부분 ----- */
-           list_insert_ordered(&sema->waiters, &thread_current ()->elem, thread_priority_compare, NULL);
+           
+           // 2차 수정 위해 주석 처리
+           
+           //list_insert_ordered(&sema->waiters, &thread_current ()->elem, thread_priority_compare, NULL);
+           
            //--------------------------------------------------------------------------
+           //아래가 2차 수정
+           /* (수정) ready_list와 동일한 thread_priority_compare 사용 */
+            list_insert_ordered(&sema->waiters, &thread_current ()->elem,
+                            thread_priority_compare, NULL);
+
+           //----------------------------------------------------------------------------
 
 
            
@@ -171,8 +181,10 @@ sema_up (struct semaphore *sema)
 
     old_level = intr_disable ();
     if (!list_empty (&sema->waiters))
+    {
         thread_unblock (list_entry (list_pop_front (&sema->waiters),
                                     struct thread, elem));
+    }
     sema->value++;
     intr_set_level (old_level);
 }
