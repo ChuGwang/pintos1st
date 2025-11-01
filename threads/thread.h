@@ -27,31 +27,6 @@ typedef int tid_t;
 
 
 
-
-//-----------------------------------------------------------------------------
-//여기부터
-
-/* thread.h */
-#define AGE_THRESHOLD 20
-#define PRI_DEFAULT 31         /* 기존 Pintos 값 사용(프로젝트 값에 맞춰 조정) */
-#define PRI_MAX 63
-#define PRI_MIN 0
-
-/* MLFQS 관련 */
-#define MLFQS_QUEUE_COUNT 3
-#define Q0_TIMESLICE 2
-#define Q1_TIMESLICE 4
-#define Q2_TIMESLICE 8
-
-//여기까지 추가
-//-----------------------------------------------------------------------------
-
-
-
-
-
-
-
 /* A kernel thread or user process.
 
    Each thread structure is stored in its own 4 kB page.  The
