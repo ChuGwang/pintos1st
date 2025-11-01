@@ -24,6 +24,34 @@ typedef int tid_t;
 #define PRI_DEFAULT 31 /* Default priority. */
 #define PRI_MAX 63     /* Highest priority. */
 
+
+
+
+
+//-----------------------------------------------------------------------------
+//여기부터
+
+/* thread.h */
+#define AGE_THRESHOLD 20
+#define PRI_DEFAULT 31         /* 기존 Pintos 값 사용(프로젝트 값에 맞춰 조정) */
+#define PRI_MAX 63
+#define PRI_MIN 0
+
+/* MLFQS 관련 */
+#define MLFQS_QUEUE_COUNT 3
+#define Q0_TIMESLICE 2
+#define Q1_TIMESLICE 4
+#define Q2_TIMESLICE 8
+
+//여기까지 추가
+//-----------------------------------------------------------------------------
+
+
+
+
+
+
+
 /* A kernel thread or user process.
 
    Each thread structure is stored in its own 4 kB page.  The
@@ -103,6 +131,23 @@ struct thread
 
     /* Owned by thread.c. */
     unsigned magic; /* Detects stack overflow. */
+
+
+
+
+//--------------------------------------------------------------------
+//여기부터
+
+    int base_priority;       /* 원래 우선순위(우선순위 상속/복원용) */
+    int age;                 /* 에이징 카운터 (큐에 들어갈 때 0으로 초기화) */
+
+    /* MLFQS 관련 */
+    bool mlfqs_enabled;      /* 전역 플래그 대신 스레드가 MLFQS 모드인지 표시(선택적) */
+    int mlfq_level;          /* 0(Q0),1(Q1),2(Q2) */
+    int mlfq_time_used;      /* 현재 레벨에서 소모한 틱 수 */
+
+//-------------------------------------------------------------------------------
+
 };
 
 /* If false (default), use round-robin scheduler.
@@ -139,6 +184,14 @@ void thread_foreach (thread_action_func *, void *);
 
 int thread_get_priority (void);
 void thread_set_priority (int);
+
+
+//--------------------------------------------------
+//여기 아래 추가
+/* 새로 추가하는 함수 */
+void thread_check_preempt_after_unblock (void);
+//--------------------------------------------------
+
 
 int thread_get_nice (void);
 void thread_set_nice (int);
