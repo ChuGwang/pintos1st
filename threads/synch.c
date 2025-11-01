@@ -41,6 +41,51 @@
 
    - up or "V": increment the value (and wake up one waiting
      thread, if any). */
+
+
+
+//---------------------------------------------------------------
+/* One semaphore in a list. */
+struct semaphore_elem
+{
+    struct list_elem elem;      /* List element. */
+    struct semaphore semaphore; /* This semaphore. */
+
+
+
+//----------------------------------------------------------------------
+// 2차 수정 (근데 내 생각엔 이거 넣으면 안됨)
+    //int priority;               /* <--- 1. 이 줄을 추가하세요 */
+//-----------------------------------------------------------------------
+
+
+
+};
+//----------------------------------------------------------------
+
+
+
+//---------------------------------------------------------------------------
+/* <--- 2. 이 함수 전체를 추가하세요 */
+/*
+ * cond_wait의 waiters 리스트(semaphore_elem)를 
+ * 우선순위 순으로 정렬하기 위한 비교 함수
+ */
+static bool
+sema_elem_priority_compare (const struct list_elem *a,
+                            const struct list_elem *b,
+                            void *aux UNUSED)
+{
+  const struct semaphore_elem *sa = list_entry(a, struct semaphore_elem, elem);
+  const struct semaphore_elem *sb = list_entry(b, struct semaphore_elem, elem);
+  
+  /* 내림차순 정렬 (높은 우선순위가 먼저) */
+  return sa->priority > sb->priority;
+}
+//---------------------------------------------------------------------------
+
+
+
 void
 sema_init (struct semaphore *sema, unsigned value)
 {
@@ -169,29 +214,6 @@ sema_test_helper (void *sema_)
         }
 }
 
-
-
-//---------------------------------------------------------------------------
-/* <--- 2. 이 함수 전체를 추가하세요 */
-/*
- * cond_wait의 waiters 리스트(semaphore_elem)를 
- * 우선순위 순으로 정렬하기 위한 비교 함수
- */
-static bool
-sema_elem_priority_compare (const struct list_elem *a,
-                            const struct list_elem *b,
-                            void *aux UNUSED)
-{
-  const struct semaphore_elem *sa = list_entry(a, struct semaphore_elem, elem);
-  const struct semaphore_elem *sb = list_entry(b, struct semaphore_elem, elem);
-  
-  /* 내림차순 정렬 (높은 우선순위가 먼저) */
-  return sa->priority > sb->priority;
-}
-//---------------------------------------------------------------------------
-
-
-
 /* Initializes LOCK.  A lock can be held by at most a single
    thread at any given time.  Our locks are not "recursive", that
    is, it is an error for the thread currently holding a lock to
@@ -281,22 +303,7 @@ lock_held_by_current_thread (const struct lock *lock)
     return lock->holder == thread_current ();
 }
 
-/* One semaphore in a list. */
-struct semaphore_elem
-{
-    struct list_elem elem;      /* List element. */
-    struct semaphore semaphore; /* This semaphore. */
 
-
-
-//----------------------------------------------------------------------
-// 2차 수정 (근데 내 생각엔 이거 넣으면 안됨)
-    //int priority;               /* <--- 1. 이 줄을 추가하세요 */
-//-----------------------------------------------------------------------
-
-
-
-};
 
 /* Initializes condition variable COND.  A condition variable
    allows one piece of code to signal a condition and cooperating
