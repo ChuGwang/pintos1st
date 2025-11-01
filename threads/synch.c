@@ -265,7 +265,46 @@ lock_acquire (struct lock *lock)
     ASSERT (!intr_context ());
     ASSERT (!lock_held_by_current_thread (lock));
 
+
+
+   //---------------------------------------------------------
+   // 2차 수정
+   /* ----- 기부 로직 추가 (sema_down 전) ----- */
+   if (lock->holder != NULL)
+   {
+    current->lock_im_waiting_for = lock; /* 1. 내가 기다릴 락 기록 */
+
+    struct thread *holder = lock->holder;
+    
+    /* 2. (반복적 기부) 락 홀더의 우선순위가 나보다 낮으면 기부 */
+    /* 락 홀더가 다른 락을 기다리고 있다면, 그 홀더에게도 연쇄적으로 기부 */
+    while (holder && current->priority > holder->priority)
+    {
+      holder->priority = current->priority;
+      holder = holder->lock_im_waiting_for ? holder->lock_im_waiting_for->holder : NULL;
+    }
+   }
+   /* ----- 기부 로직 끝 ----- */
+   //----------------------------------------------------------
+
+
+
     sema_down (&lock->semaphore);
+
+
+   //-----------------------------------------------------
+   // 2차 수
+   /* ----- 👇 락 획득 성공 후 로직 (sema_down 후) ----- */
+  
+   current->lock_im_waiting_for = NULL; /* 1. 더 이상 대기하는 락 없음 */
+  
+   /* 2. 락을 내 '보유 락 리스트'에 추가 */
+   list_push_back(&current->locks_i_hold, &lock->elem);
+   /* ----- 👆 획득 로직 끝 ----- */
+   //-----------------------------------------------------
+
+
+   
     lock->holder = thread_current ();
 }
 
@@ -300,6 +339,25 @@ lock_release (struct lock *lock)
     ASSERT (lock != NULL);
     ASSERT (lock_held_by_current_thread (lock));
 
+
+   
+   //----------------------------------------------------
+   // 2차 수
+    struct thread *current = thread_current();
+
+     /* ----- 기부 회수 로직 추가 (sema_up 전) ----- */
+
+     /* 1. '보유 락 리스트'에서 이 락을 제거 */
+     list_remove(&lock->elem);
+
+     /* 2. 락을 해제했으므로 우선순위를 재계산 (다른 락에 의한 기부가 남았는지 확인) */
+     thread_recalculate_priority(current);
+
+     /* ----- 기부 회수 로직 끝 ----- */
+   //---------------------------------------------------
+
+
+   
     lock->holder = NULL;
     sema_up (&lock->semaphore);
 }
