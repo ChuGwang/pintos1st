@@ -294,7 +294,7 @@ lock_acquire (struct lock *lock)
 
 
    //-----------------------------------------------------
-   // 2차 수
+   // 2차 수정
    /* ----- 락 획득 성공 후 로직 (sema_down 후) ----- */
   
    current->lock_im_waiting_for = NULL; /* 1. 더 이상 대기하는 락 없음 */
