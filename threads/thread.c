@@ -33,8 +33,6 @@
 #define MLFQS_SLICE_Q1 4
 #define MLFQS_SLICE_Q2 8
 
-
-/* <--- 또는 이 줄을 추가하세요 */
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 //------------------------------------------------------------------------------------
 
@@ -137,11 +135,11 @@ thread_init (void)
 
 
     //-------------------------------------------------------------------
-    /* -----  MLFQS 큐 초기화 추가 ----- */
+    // -----  MLFQS 큐 초기화 추가 ----- 
      list_init (&mlfqs_ready_q[0]);
      list_init (&mlfqs_ready_q[1]);
      list_init (&mlfqs_ready_q[2]);
-    /* -----  추가 끝 ----- */
+    // -----  추가 끝 ----- 
    //---------------------------------------------------------------------
    
 
@@ -155,11 +153,11 @@ thread_init (void)
 
 
 //----------------------------------------------------------------------
-/* ----- 새로운 함수 구현: thread_priority_compare ----- */
-/*
- * 'a'의 우선순위가 'b'의 우선순위보다 높으면(크면) true를 반환합니다.
- * list_insert_ordered()에 의해 내림차순 정렬에 사용됩니다.
- */
+// ----- 새로운 함수 구현: thread_priority_compare ----- 
+//
+ // 'a'의 우선순위가 'b'의 우선순위보다 높으면(크면) true를 반환합니다.
+ // list_insert_ordered()에 의해 내림차순 정렬에 사용됩니다.
+
 bool
 thread_priority_compare(const struct list_elem *a,
                         const struct list_elem *b,
@@ -169,7 +167,7 @@ thread_priority_compare(const struct list_elem *a,
   struct thread *tb = list_entry(b, struct thread, elem);
   return ta->priority > tb->priority;
 }
-/* -----  새로운 함수 구현 끝 ----- */
+// -----  새로운 함수 구현 끝 ----- 
 
 //----------------------------------------------------------------------
 
@@ -178,16 +176,16 @@ thread_priority_compare(const struct list_elem *a,
 
 
 //------------------------------------------------------------------------
-/* ----- 새로운 함수 구현: thread_check_preemption ----- */
-/*
- * 현재 실행 중인 스레드가 준비 큐의 최고 우선순위 스레드보다
- * 우선순위가 낮은지 확인하고, 낮다면 즉시 양보(yield)합니다.
- * (MLFQS 모드가 아닐 때만 사용됩니다)
- */
+// ----- 새로운 함수 구현: thread_check_preemption ----- 
+
+ // 현재 실행 중인 스레드가 준비 큐의 최고 우선순위 스레드보다
+ // 우선순위가 낮은지 확인하고, 낮다면 즉시 양보(yield)합니다.
+ // (MLFQS 모드가 아닐 때만 사용됩니다)
+
 void
 thread_check_preemption(void)
 {
-  /* MLFQS 모드이거나, 인터럽트 컨텍스트에서는 이 함수를 사용하지 않습니다. */
+  // MLFQS 모드이거나, 인터럽트 컨텍스트에서는 이 함수를 사용하지 않습니다. 
   if (thread_mlfqs || intr_context())
     return;
 
@@ -200,7 +198,7 @@ thread_check_preemption(void)
     }
   }
 }
-/* ----- 새로운 함수 구현 끝 ----- */
+// ----- 새로운 함수 구현 끝 ----- 
 //-------------------------------------------------------------------------
 
 
@@ -232,9 +230,9 @@ thread_tick (void)
 
     //-----------------------------------------------------------------------
    // 2차 수정
-    /* ----- [!!!] 수정된 부분 [!!!] ----- */
+    // -----수정된 부분----- 
     thread_wakeup(timer_ticks()); 
-    /* ----- 수정 끝 ----- */
+    // ----- 수정 끝 ----- 
    //-----------------------------------------------------------------------
 
 
@@ -251,7 +249,7 @@ thread_tick (void)
     else
         kernel_ticks++;
 
-   // 이게 원본
+   // 원본
     // Enforce preemption. 
     /*if (++thread_ticks >= TIME_SLICE)
         intr_yield_on_return ();*/
@@ -260,14 +258,14 @@ thread_tick (void)
 
 
    //-------------------------------------------------------------------------
-   /* ----- 3. 새로운 스케줄링 로직 추가 ----- */
+   //----- 3. 새로운 스케줄링 로직 추가 ----- 
 
-  /* 스케줄러 로직은 매 틱마다 실행됩니다. */
+  // 스케줄러 로직은 매 틱마다 실행됩니다. 
   if (thread_mlfqs)
   {
-    /* ========= MLFQS 스케줄러 로직 ========= */
+    // ========= MLFQS 스케줄러 로직 ========= 
 
-    /* 3-A. 실행 중인 스레드 처리 (Time Slice 소모 및 강등) */
+    // 3-A. 실행 중인 스레드 처리 (Time Slice 소모 및 강등) 
     if (t != idle_thread)
     {
       t->ticks_in_current_slice++;
@@ -277,7 +275,7 @@ thread_tick (void)
       else if (t->mlfqs_queue_level == 1) slice_limit = MLFQS_SLICE_Q1;
       else slice_limit = MLFQS_SLICE_Q2;
 
-      /* 타임 슬라이스를 모두 소진했으면 강등(Demote)시키고 양보(Yield) */
+      // 타임 슬라이스를 모두 소진했으면 강등(Demote)시키고 양보(Yield) 
       if (t->ticks_in_current_slice >= slice_limit)
       {
         t->mlfqs_queue_level = min(t->mlfqs_queue_level + 1, 2); // Q2가 최대
@@ -286,22 +284,22 @@ thread_tick (void)
       }
     }
 
-    /* 3-B. 대기 중인 스레드 처리 (Aging 및 승급) */
+    // 3-B. 대기 중인 스레드 처리 (Aging 및 승급) 
     struct list_elem *e;
-    /* Q1, Q2 큐에 대해서만 승급(Aging) 수행 */
+    // Q1, Q2 큐에 대해서만 승급(Aging) 수행 
     for (int i = 1; i <= 2; i++)
     {
       /* * (주의) 리스트를 순회하면서 원소를 제거/이동할 수 있으므로
        * e를 루프 내에서 수동으로 증가시키는 안전한 순회 방식을 사용합니다.
        */
-      for (e = list_begin(&mlfqs_ready_q[i]); e != list_end(&mlfqs_ready_q[i]); /* e는 루프 내에서 증가 */)
+      for (e = list_begin(&mlfqs_ready_q[i]); e != list_end(&mlfqs_ready_q[i]); /* e는 루프 내에서 증가*/ )
       {
         struct thread *th = list_entry(e, struct thread, elem);
         th->mlfqs_age++;
 
         if (th->mlfqs_age >= AGE_LIMIT)
         {
-          /* 다음 원소를 미리 저장 (현재 원소는 리스트에서 제거됨) */
+          // 다음 원소를 미리 저장 (현재 원소는 리스트에서 제거됨) 
           e = list_next(e); 
           
           list_remove(&th->elem); // 현재 큐에서 제거
@@ -309,36 +307,36 @@ thread_tick (void)
           th->mlfqs_queue_level--; // 승급
           th->mlfqs_age = 0;       // age 초기화
           
-          /* 상위 큐(Q0 또는 Q1)의 맨 뒤에 추가 */
+          // 상위 큐(Q0 또는 Q1)의 맨 뒤에 추가 
           list_push_back(&mlfqs_ready_q[th->mlfqs_queue_level], &th->elem);
         }
         else
         {
-          /* age가 다 차지 않았으면 다음 스레드로 이동 */
+          // age가 다 차지 않았으면 다음 스레드로 이동 
           e = list_next(e);
         }
       }
     }
 
-    /* 3-C. MLFQS 선점 확인 */
-    /* 현재 스레드가 idle이 아닐 때만 확인 */
-    if (t != idle_thread)
+    // 3-C. MLFQS 선점 확인 
+    // 현재 스레드가 idle이 아닐 때만 확인 
+    if (t != idle_thread
     {
-      /* 현재 Q1 실행 중인데 Q0에 스레드가 있거나, */
+      // 현재 Q1 실행 중인데 Q0에 스레드가 있거나, 
       if (t->mlfqs_queue_level == 1 && !list_empty(&mlfqs_ready_q[0]))
         intr_yield_on_return();
-      /* 현재 Q2 실행 중인데 Q0 또는 Q1에 스레드가 있으면 선점 */
+      // 현재 Q2 실행 중인데 Q0 또는 Q1에 스레드가 있으면 선점 
       else if (t->mlfqs_queue_level == 2 && (!list_empty(&mlfqs_ready_q[0]) || !list_empty(&mlfqs_ready_q[1])))
         intr_yield_on_return();
     }
   }
   else
   {
-    /* ========= 선점형 우선순위 스케줄러 로직 (Aging) ========= */
+    // ========= 선점형 우선순위 스케줄러 로직 (Aging) ========= 
 
     struct list_elem *e;
 
-    /* 3-D. 대기 중인 스레드 처리 (Aging) */
+    // 3-D. 대기 중인 스레드 처리 (Aging) 
     /* * ready_list를 순회하며 age 증가 및 우선순위 상승
      * (마찬가지로 안전한 리스트 순회 방식 사용)
      */
@@ -501,7 +499,7 @@ thread_unblock (struct thread *t)
     ASSERT (t->status == THREAD_BLOCKED);
 
    //---------------------------------------------------------------------
-   //아래 이게 원본
+   //아래 원본
     //list_push_back (&ready_list, &t->elem);
    //---------------------------------------------------------------------
    
