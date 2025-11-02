@@ -320,7 +320,7 @@ thread_tick (void)
 
     // 3-C. MLFQS 선점 확인 
     // 현재 스레드가 idle이 아닐 때만 확인 
-    if (t != idle_thread
+    if (t != idle_thread)
     {
       // 현재 Q1 실행 중인데 Q0에 스레드가 있거나, 
       if (t->mlfqs_queue_level == 1 && !list_empty(&mlfqs_ready_q[0]))
