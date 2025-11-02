@@ -54,8 +54,8 @@ struct semaphore_elem
 
 
 //----------------------------------------------------------------------
-// 2차 수정 (근데 내 생각엔 이거 넣으면 안됨)
-    int priority;               /* <--- 1. 이 줄을 추가하세요 */
+// 2차 수정
+    int priority;
 //-----------------------------------------------------------------------
 
 
@@ -66,7 +66,6 @@ struct semaphore_elem
 
 
 //---------------------------------------------------------------------------
-/* <--- 2. 이 함수 전체를 추가하세요 */
 /*
  * cond_wait의 waiters 리스트(semaphore_elem)를 
  * 우선순위 순으로 정렬하기 위한 비교 함수
@@ -117,14 +116,7 @@ sema_down (struct semaphore *sema)
 
 
 
-           //------------------------------------------------------------------------
-            /* ----- 수정된 부분 ----- */
-           
-           // 2차 수정 위해 주석 처리
-           
-           //list_insert_ordered(&sema->waiters, &thread_current ()->elem, thread_priority_compare, NULL);
-           
-           //--------------------------------------------------------------------------
+          //--------------------------------------------------------------------------
            //아래가 2차 수정
            /* (수정) ready_list와 동일한 thread_priority_compare 사용 */
             list_insert_ordered(&sema->waiters, &thread_current ()->elem,
@@ -270,7 +262,6 @@ lock_acquire (struct lock *lock)
    //---------------------------------------------------------
    // 2차 수정
    struct thread *current = thread_current();
-   /* ----- 기부 로직 추가 (sema_down 전) ----- */
    if (lock->holder != NULL)
    {
     current->lock_im_waiting_for = lock; /* 1. 내가 기다릴 락 기록 */
@@ -285,7 +276,6 @@ lock_acquire (struct lock *lock)
       holder = holder->lock_im_waiting_for ? holder->lock_im_waiting_for->holder : NULL;
     }
    }
-   /* ----- 기부 로직 끝 ----- */
    //----------------------------------------------------------
 
 
@@ -295,13 +285,10 @@ lock_acquire (struct lock *lock)
 
    //-----------------------------------------------------
    // 2차 수정
-   /* ----- 락 획득 성공 후 로직 (sema_down 후) ----- */
-  
    current->lock_im_waiting_for = NULL; /* 1. 더 이상 대기하는 락 없음 */
   
    /* 2. 락을 내 '보유 락 리스트'에 추가 */
    list_push_back(&current->locks_i_hold, &lock->elem);
-   /* ----- 획득 로직 끝 ----- */
    //-----------------------------------------------------
 
 
@@ -343,25 +330,14 @@ lock_release (struct lock *lock)
 
    
    //----------------------------------------------------
-   // 2차 수
+   // 2차 수정
     struct thread *current = thread_current();
-
-     /* ----- 기부 회수 로직 추가 (sema_up 전) ----- */
 
      /* 1. '보유 락 리스트'에서 이 락을 제거 */
      list_remove(&lock->elem);
 
      /* 2. 락을 해제했으므로 우선순위를 재계산 (다른 락에 의한 기부가 남았는지 확인) */
      thread_recalculate_priority(current);
-
-     /* ----- 기부 회수 로직 끝 ----- */
-   //---------------------------------------------------
-   // 2차 수정
-   // 3차 수정에서 여기 지우라고 함
-   /* ----- [!!!] 수정된 부분 [!!!] ----- */
-   /* if (!intr_context()) // 인터럽트 컨텍스트가 아닐 때만 확인
-        thread_check_preemption(); */
-    /* ----- 수정 끝 ----- */
    //------------------------------------------------------------
 
 
@@ -430,10 +406,10 @@ cond_wait (struct condition *cond, struct lock *lock)
 
 
    //----------------------------------------------------------------------
-   /* 3-A: waiter에 현재 스레드의 우선순위를 저장합니다. */
+   /* 3-A: waiter에 현재 스레드의 우선순위를 저장 */
     waiter.priority = thread_current ()->priority; 
   
-    /* 3-B: 새로 만든 올바른 비교 함수(sema_elem_priority_compare)를 사용합니다. */
+    /* 3-B: 새로 만든 올바른 비교 함수(sema_elem_priority_compare)를 사용 */
     list_insert_ordered(&cond->waiters, &waiter.elem, 
                       sema_elem_priority_compare, NULL);
    //-----------------------------------------------------------------------
@@ -441,23 +417,6 @@ cond_wait (struct condition *cond, struct lock *lock)
 
    
     lock_release (lock);
-
-
-   //------------------------------------------------------------------
-   /* ----- 수정된 부분 ----- */
-   /*
-   * (기존 코드) list_push_back (&cond->waiters, &waiter.elem);
-   * * (수정 코드) 우선순위 비교 함수를 사용해 정렬된 위치에 삽입합니다.
-   */
-   /*
-    list_insert_ordered(&cond->waiters, &waiter.elem, 
-                      thread_priority_compare, NULL);
-                      */ 
-   
-   //2차 수정 위해 주석 처리
-   
-   /* ----- 수정 끝 ----- */
-   //----------------------------------------------------------------------
 
 
    
