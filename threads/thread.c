@@ -253,8 +253,8 @@ thread_tick (void)
 
    // 이게 원본
     // Enforce preemption. 
-    if (++thread_ticks >= TIME_SLICE)
-        intr_yield_on_return ();
+    /*if (++thread_ticks >= TIME_SLICE)
+        intr_yield_on_return ();*/
         
 
 
