@@ -251,11 +251,11 @@ thread_tick (void)
     else
         kernel_ticks++;
 
-   /* 이게 원본
+   // 이게 원본
     // Enforce preemption. 
     if (++thread_ticks >= TIME_SLICE)
         intr_yield_on_return ();
-        */
+        
 
 
 
