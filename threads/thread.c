@@ -11,6 +11,15 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+
+
+
+//---------------------------------------------------------
+#include "devices/timer.h"
+//---------------------------------------------------------
+
+
+
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -218,11 +227,10 @@ thread_start (void)
 void
 thread_tick (void)
 {
-    struct thread *t = thread_current ();
 
 
-   
-   //-----------------------------------------------------------------------
+
+    //-----------------------------------------------------------------------
    // 2차 수정
     /* ----- [!!!] 수정된 부분 [!!!] ----- */
     thread_wakeup(timer_ticks()); 
@@ -231,6 +239,8 @@ thread_tick (void)
 
 
    
+    struct thread *t = thread_current ();
+
     // Update statistics. 
     if (t == idle_thread)
         idle_ticks++;
